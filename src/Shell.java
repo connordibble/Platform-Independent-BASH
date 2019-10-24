@@ -12,19 +12,19 @@ public class Shell {
     private static double ptime = 0;
 
     public static void main(String[] args) throws IOException {
-        while(true) {
+        while(true) { //run until exit is invoked
             String current_dir = System.getProperty("user.dir");
             Scanner input = new Scanner(System.in);
-            System.out.print(current_dir + ": ");
-            String command = input.nextLine();
-            run_shell(command,current_dir);
+            System.out.print(current_dir + ": "); //get the prompt
+            String command = input.nextLine(); //get command
+            run_shell(command,current_dir); //run the shell
         }
     }
 
     public static void run_shell(String command, String current_dir) throws IOException {
         String[] commands = splitCommand(command);
         command_history.add(command);
-        switch (commands[0]){
+        switch (commands[0]){ //check for built in commands
             case "cd":
                 System.setProperty("user.dir", changedir(commands,new File(current_dir)));
                 break;
@@ -38,7 +38,7 @@ public class Shell {
                 break;
 
             case "pwd":
-                System.out.println(System.getProperty("user.dir"));
+                System.out.println("Current working directory is: " + System.getProperty("user.dir"));
                 break;
 
             case "^":
@@ -62,13 +62,13 @@ public class Shell {
                 System.out.printf("Total time in child processes: %6.3f \n", ptime);
                 break;
 
-            default:
+            default: //check for external commands
                 external_commands(command);
         }
     }
 
     public static String changedir(String[] commands, File curr) {
-        if(commands.length == 1){
+        if(commands.length == 1){ //no arg case
             return System.getProperty("user.home");
         }
 
@@ -88,7 +88,7 @@ public class Shell {
     }
 
     public static void list(String[] commands){
-        if(commands.length > 1){
+        if(commands.length > 1){ //check for valid input
             System.out.println("list only takes one parameter");
             return;
         }
@@ -96,44 +96,45 @@ public class Shell {
         File[] children = current.listFiles();
         StringBuilder special = new StringBuilder();
         long size;
+        if(children.length > 0) {
+            for (File i : children) { //go over each file and print neccesary info
+                if (i.isDirectory())
+                    special.append('d');
+                else
+                    special.append('-');
 
-        for (File i: children) {
-            if(i.isDirectory())
-                special.append('d');
-            else
-                special.append('-');
+                if (i.canRead())
+                    special.append('r');
+                else
+                    special.append('-');
 
-            if(i.canRead())
-                special.append('r');
-            else
-                special.append('-');
+                if (i.canWrite())
+                    special.append('w');
+                else
+                    special.append('-');
 
-            if(i.canWrite())
-                special.append('w');
-            else
-                special.append('-');
+                if (i.canExecute())
+                    special.append('x');
+                else
+                    special.append('-');
 
-            if(i.canExecute())
-                special.append('x');
-            else
-                special.append('-');
+                size = i.length();
+                SimpleDateFormat formatter = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
+                Date date = new Date(); //make date object to read date
 
-            size = i.length();
-            SimpleDateFormat formatter = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
-            Date date = new Date();
+                System.out.printf("%s %10d %s %s \n", special.toString(), size, formatter.format(date), i.getName());
+                special = new StringBuilder();
 
-            System.out.printf("%s %10d %s %s \n",special.toString(),size,formatter.format(date),i.getName());
-            special = new StringBuilder();
-
+            }
         }
-
     }
+
 
 
 
     public static void specific_hist(int number) throws IOException {
         if(command_history.size() < number){ //check if command exists
-            System.out.println("The desired command does not exist in the history");
+            System.out.println("The desired command index does not exist in the history");
             return;
         }
         run_shell(command_history.get(number),System.getProperty("user.dir")); //run the command back thru
@@ -145,14 +146,14 @@ public class Shell {
         double begin;
         try {
             if (command.contains("|")){
-                String[] piping_commands = command.split("\\|");
-                String[] command1 = splitCommand(piping_commands[0]);
+                String[] piping_commands = command.split("\\|"); //split command on pipe
+                String[] command1 = splitCommand(piping_commands[0]); //split each individual command
                 String[] command2 = splitCommand(piping_commands[1]);
 
-                ProcessBuilder pb1 = new ProcessBuilder(command1);
+                ProcessBuilder pb1 = new ProcessBuilder(command1);//make processes
                 ProcessBuilder pb2 = new ProcessBuilder(command2);
 
-                pb1.directory(new File(System.getProperty("user.dir")));
+                pb1.directory(new File(System.getProperty("user.dir"))); //run the piping algorithm
                 pb1.redirectInput(ProcessBuilder.Redirect.INHERIT);
 
                 pb2.directory(new File(System.getProperty("user.dir")));
@@ -173,9 +174,9 @@ public class Shell {
                 out.close();
                 left.waitFor();
                 right.waitFor();
-                ptime += (System.currentTimeMillis() - begin)/1000;
+                ptime += (System.currentTimeMillis() - begin)/1000; //update ptime to account for waiting
             }
-            else{ //if not piping, we check for external commands.
+            else{ //if not piping, we check for other external commands.
                 String[] commands = splitCommand(command);
                 ProcessBuilder process = new ProcessBuilder(commands);
                 process.directory(new File(System.getProperty("user.dir")));
@@ -188,7 +189,7 @@ public class Shell {
                 else{
                     begin = System.currentTimeMillis();
                     process.start().waitFor();
-                    ptime += (System.currentTimeMillis() - begin)/1000;
+                    ptime += (System.currentTimeMillis() - begin)/1000; //update ptime
                 }
             }
         }
