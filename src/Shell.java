@@ -95,7 +95,7 @@ public class Shell {
         File current = new File (System.getProperty("user.dir"));
         File[] children = current.listFiles();
         StringBuilder special = new StringBuilder();
-        long size = 0;
+        long size;
 
         for (File i: children) {
             if(i.isDirectory())
@@ -123,6 +123,7 @@ public class Shell {
             Date date = new Date();
 
             System.out.printf("%s %10d %s %s \n",special.toString(),size,formatter.format(date),i.getName());
+            special = new StringBuilder();
 
         }
 
